@@ -62,6 +62,7 @@ namespace LavaSucks
 
 		void OnInitialize(EventArgs args)
 		{
+			//Adding a command is as simple as adding a new ``Command`` object to the ``ChatCommands`` list.
 			Commands.ChatCommands.Add(new Command("lavasucks.admin.toggle", ToggleLava, "tlava")
 				{
 					HelpText = "Turns on/off lava drop from hellstone mining. Default setting is off."
@@ -69,13 +70,19 @@ namespace LavaSucks
 		}
 		
 		#region OnGetData
+		/// <summary>
+		/// Called when the server receives any sort of packet.
+		/// </summary>
 		void OnGetData(GetDataEventArgs args)
 		{
+			// If we don't want to remove lava, then this method is useless and we can return now.
 			if (!doesLavaSuck)
 				return;
-
+			
+			// If the packet hasn't been handled (i.e. canceled out) by another plugin, and it's a tile edit packet.
 			if (!args.Handled && args.MsgID == PacketTypes.Tile)
 			{
+				// Then we want to read the data it exposes.
 				using (var reader = new BinaryReader(new MemoryStream(args.Msg.readBuffer, args.Index, args.Length)))
 				{
 					var action = reader.ReadByte();
