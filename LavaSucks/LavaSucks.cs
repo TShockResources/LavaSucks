@@ -7,7 +7,7 @@ using TShockAPI;
 
 namespace LavaSucks
 {
-	[ApiVersion(1, 21)]
+	[ApiVersion(1, 22)]
 	public class LavaSucks : TerrariaPlugin
 	{
 		public static bool doesLavaSuck = true;
@@ -63,6 +63,7 @@ namespace LavaSucks
 		void OnInitialize(EventArgs args)
 		{
 			//Adding a command is as simple as adding a new ``Command`` object to the ``ChatCommands`` list.
+			//The ``Commands` object is available after including TShock in the file (`using TShockAPI;`)
 			Commands.ChatCommands.Add(new Command("lavasucks.admin.toggle", ToggleLava, "tlava")
 				{
 					HelpText = "Turns on/off lava drop from hellstone mining. Default setting is off."
@@ -83,18 +84,18 @@ namespace LavaSucks
 			if (!args.Handled && args.MsgID == PacketTypes.Tile)
 			{
 				// Then we want to read the data it exposes.
-				using (var reader = new BinaryReader(new MemoryStream(args.Msg.readBuffer, args.Index, args.Length)))
+				using (BinaryReader reader = new BinaryReader(new MemoryStream(args.Msg.readBuffer, args.Index, args.Length)))
 				{
-					var action = reader.ReadByte();
-					var x = reader.ReadInt16();
-					var y = reader.ReadInt16();
-					var type = reader.ReadUInt16();
+					byte action = reader.ReadByte();
+					short x = reader.ReadInt16();
+					short y = reader.ReadInt16();
+					ushort type = reader.ReadUInt16();
 					
-					//when this tile is destroyed...
-					if (Main.tile[x, y].type != 58) 
+					//if the tile destroyed was not hellstone, we can ignore the packet and return
+					if (Main.tile[x, y].type != Terraria.ID.TileID.Hellstone) 
 						return;
-					
-					if (action == 0)
+						
+					if (action == 0)  //0 = destroy
 					{
 						//remove the tile from play instead of sending to the graveyard...
 						Main.tile[x, y].active(false);
@@ -103,13 +104,17 @@ namespace LavaSucks
 						Main.tile[x, y].liquidType(0);
 						Main.tile[x, y].liquid = 0;
 						Main.tile[x, y].type = 0;
+						//Tell clients that the hellstone tile is dead
 						TSPlayer.All.SendTileSquare(x, y);
 						TShock.Players[args.Msg.whoAmI].SendTileSquare(x, y);
 						
 						//and special summon hellstone to the field
 						Item itm = new Item();
-						itm.SetDefaults(174);
+						//Create a new item with the properties of hellstone
+						itm.SetDefaults(Terraria.ID.ItemID.Hellstone);
+						//Spawn it on the server
 						int itemid = Item.NewItem(x * 16, y * 16, itm.width, itm.height, itm.type, 1, true, 0, true);
+						//Then send a packet to let clients know it exists
 						NetMessage.SendData((int)PacketTypes.ItemDrop, -1, -1, "", itemid, 0f, 0f, 0f);
 					}
 				}
@@ -119,6 +124,7 @@ namespace LavaSucks
 
 		void ToggleLava(CommandArgs args)
 		{
+			//invert the boolean value
 			doesLavaSuck = !doesLavaSuck;
 
 			args.Player.SendSuccessMessage("Lava from hellstone mining is now {0}.",
