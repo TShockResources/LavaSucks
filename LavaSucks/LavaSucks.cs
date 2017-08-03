@@ -2,36 +2,25 @@
 using System.IO;
 using System.Reflection;
 using Terraria;
+using Terraria.Localization;
 using TerrariaApi.Server;
 using TShockAPI;
 
 namespace LavaSucks
 {
-	[ApiVersion(1, 22)]
+	[ApiVersion(2, 1)]
 	public class LavaSucks : TerrariaPlugin
 	{
 		public static bool doesLavaSuck = true;
 
 		#region Info
-		public override string Name
-		{
-			get { return "LavaSucks"; }
-		}
+		public override string Name => "LavaSucks";
 		
-		public override string Author
-		{
-			get { return "aMoka"; }
-		}
+		public override string Author => "aMoka";
 		
-		public override string Description
-		{
-			get { return "Autoremoves the blood of hellstone children during their murders."; }
-		}
+		public override string Description => "Autoremoves the blood of hellstone children during their murders.";
 		
-		public override Version Version
-		{
-			get { return Assembly.GetExecutingAssembly().GetName().Version; }
-		}
+		public override Version Version => Assembly.GetExecutingAssembly().GetName().Version;
 		#endregion
 		
 		#region Initialize
@@ -115,7 +104,7 @@ namespace LavaSucks
 						//Spawn it on the server
 						int itemid = Item.NewItem(x * 16, y * 16, itm.width, itm.height, itm.type, 1, true, 0, true);
 						//Then send a packet to let clients know it exists
-						NetMessage.SendData((int)PacketTypes.ItemDrop, -1, -1, "", itemid, 0f, 0f, 0f);
+						NetMessage.SendData((int)PacketTypes.ItemDrop, -1, -1, NetworkText.Empty, itemid, 0f, 0f, 0f);
 					}
 				}
 			}
@@ -127,8 +116,7 @@ namespace LavaSucks
 			//invert the boolean value
 			doesLavaSuck = !doesLavaSuck;
 
-			args.Player.SendSuccessMessage("Lava from hellstone mining is now {0}.",
-				(doesLavaSuck) ? "OFF" : "ON");
+            args.Player.SendSuccessMessage($"Lava from hellstone mining is now {((doesLavaSuck) ? "OFF" : "ON")}.");
 		}
 	}
 }
